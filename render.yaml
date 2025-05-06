@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: productos
+    name: productos_ssm8
     env: docker
     plan: free
     repo: https://github.com/JssDevWeb/producrender.git
