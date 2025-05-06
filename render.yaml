@@ -3,7 +3,7 @@ services:
     name: laraclient
     env: docker
     plan: free
-    repo: https://github.com/tuusuario/tu-repo
+    repo: https://github.com/JssDevWeb/producrender.git
     branch: master
     rootDir: .
     dockerfilePath: Dockerfile
