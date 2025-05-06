@@ -37,19 +37,3 @@ CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
 
 
 
-services:
-  - type: web
-    name: laraclient
-    env: docker
-    plan: free
-    repo: https://github.com/tuusuario/tu-repo
-    branch: master
-    rootDir: .
-    dockerfilePath: Dockerfile
-    buildCommand: ""
-    startCommand: ""
-    envVars:
-      - key: APP_ENV
-        value: production
-      - key: APP_KEY
-        generateValue: true
