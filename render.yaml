@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: laraclient
+    name: productos
     env: docker
     plan: free
     repo: https://github.com/JssDevWeb/producrender.git
