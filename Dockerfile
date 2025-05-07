@@ -35,7 +35,11 @@ RUN composer install --no-dev --optimize-autoloader
 RUN npm install
 RUN npm run build
 
-# Genera APP_KEY (ahora debería funcionar correctamente)
+# --- Añade este paso para copiar .env.example a .env ---
+# Esto asegura que el archivo .env exista para php artisan key:generate
+RUN cp .env.example .env || true # Usa || true por si .env.example no existe (aunque debería)
+
+# Genera APP_KEY
 RUN php artisan key:generate --force
 
 # Crea el enlace simbólico de storage (Nginx lo manejará correctamente)
