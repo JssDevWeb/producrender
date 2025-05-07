@@ -1,6 +1,7 @@
-FROM php:8.3-fpm
+# Etapa 1: Build de la aplicación (PHP, Composer, NPM/Vite)
+FROM php:8.3-fpm as builder
 
-# Instala dependencias necesarias para PHP y Node.js
+# Instala dependencias del sistema necesarias para PHP y Node.js
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpng-dev \
@@ -15,33 +16,51 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     nodejs \
     npm \
-    && docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring zip exif pcntl bcmath gd
+    && rm -rf /var/lib/apt/lists/*
+
+# Instala extensiones de PHP (asegurando pdo_pgsql)
+RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring zip exif pcntl bcmath gd
 
 # Instala Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copia el proyecto Laravel
-WORKDIR /var/www
-COPY . .
+# Copia el código fuente de la aplicación
+WORKDIR /app
+COPY . /app
 
-# Instala dependencias del proyecto PHP con Composer
+# Instala dependencias de PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# Instala dependencias del proyecto Node.js con npm (o yarn si lo usas)
+# Instala dependencias de Node.js y compila assets (Vite)
 RUN npm install
-
-
-# Genera APP_KEY y enlaces de storage
-RUN php artisan key:generate
-RUN php artisan storage:link || true
-
-# Exposición del puerto para PHP server
-EXPOSE 8000
-
-# Comando para ejecutar la aplicación
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
-
-# Ejecuta el build de Vite para compilar los assets frontend
 RUN npm run build
 
+# Genera APP_KEY (ahora debería funcionar correctamente)
+RUN php artisan key:generate --force
 
+# Crea el enlace simbólico de storage (Nginx lo manejará correctamente)
+RUN php artisan storage:link
+
+# Limpia caches de Laravel (opcional pero recomendado para producción)
+RUN php artisan config:clear
+RUN php artisan route:clear
+RUN php artisan view:clear
+
+# Etapa 2: Configuración final con Nginx
+# Usamos una imagen base ligera de Nginx (alpine es eficiente)
+FROM nginx:alpine
+
+# Copia los archivos de la aplicación desde la etapa builder a la ubicación de Nginx
+COPY --from=builder /app /var/www/html
+
+# Elimina la configuración por defecto de Nginx
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copia la configuración personalizada de Nginx que creaste en el Paso 1
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expone el puerto 80 (Render lo usará para dirigir el tráfico)
+EXPOSE 80
+
+# El comando de inicio se definirá en Render para ejecutar Nginx y PHP-FPM
+CMD ["nginx", "-g", "daemon off;"]
