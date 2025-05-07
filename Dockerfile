@@ -1,6 +1,6 @@
 FROM php:8.3-fpm
 
-# Instala dependencias necesarias
+# Instala dependencias necesarias para PHP y Node.js
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpng-dev \
@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     libpq-dev \
     libzip-dev \
+    nodejs \
+    npm \
     && docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring zip exif pcntl bcmath gd
 
 # Instala Composer
@@ -22,10 +24,16 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 COPY . .
 
-# Instala dependencias del proyecto
+# Instala dependencias del proyecto PHP con Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Genera APP_KEY y enlaces
+# Instala dependencias del proyecto Node.js con npm (o yarn si lo usas)
+RUN npm install
+
+# Ejecuta el build de Vite para compilar los assets frontend
+RUN npm run build
+
+# Genera APP_KEY y enlaces de storage
 RUN php artisan key:generate && \
     php artisan storage:link || true
 
@@ -34,6 +42,7 @@ EXPOSE 8000
 
 # Comando para ejecutar la aplicación
 CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
+
 
 
 
