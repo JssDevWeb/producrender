@@ -36,6 +36,9 @@ RUN npm install
 # Ejecuta el build de Vite para compilar los assets frontend
 RUN npm run build
 
+# --- Añade este paso para asegurar que el autoloader esté listo ---
+RUN composer dump-autoload --optimize
+
 # Genera APP_KEY
 RUN php artisan key:generate --force
 
