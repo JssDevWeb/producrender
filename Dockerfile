@@ -30,8 +30,6 @@ RUN composer install --no-dev --optimize-autoloader
 # Instala dependencias del proyecto Node.js con npm (o yarn si lo usas)
 RUN npm install
 
-# Ejecuta el build de Vite para compilar los assets frontend
-RUN npm run build
 
 # Genera APP_KEY y enlaces de storage
 RUN php artisan key:generate && \
@@ -43,6 +41,7 @@ EXPOSE 8000
 # Comando para ejecutar la aplicación
 CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
 
-
+# Ejecuta el build de Vite para compilar los assets frontend
+RUN npm run build
 
 
